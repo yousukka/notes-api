@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notes App</title>
+</head>
+<body>
+    <h1>My Notes</h1>
+
+    <input type="text" id="title" placeholder="Title">
+    <input type="text" id="content" placeholder="Content">
+    <button onclick="addNote()">Add Note</button>
+
+    <ul id="notes"></ul>
+
+    <script>
+        async function loadNotes() {
+            const response = await fetch("http://127.0.0.1:8000/notes");
+            const notes = await response.json();
+
+            let html = "";
+
+            notes.forEach((note, index) => {
+                html += `
+                    <li>
+                        <b>${note.title}</b> - ${note.content}
+                        <button onclick="deleteNote(${index})">Delete</button>
+                    </li>
+                `;
+            });
+
+            document.getElementById("notes").innerHTML = html;
+        }
+
+        async function addNote() {
+            const title = document.getElementById("title").value;
+            const content = document.getElementById("content").value;
+
+            await fetch("http://127.0.0.1:8000/notes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ title, content })
+            });
+
+            loadNotes();
+        }
+
+        async function deleteNote(id) {
+            await fetch(`http://127.0.0.1:8000/notes/${id}`, {
+                method: "DELETE"
+            });
+
+            loadNotes();
+        }
+
+        loadNotes();
+    </script>
+</body>
+</html>
