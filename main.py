@@ -34,6 +34,17 @@ def read_root():
 def list_notes():
     return notes
 
+# Day 5 Feature: Search notes by title
+@app.get("/notes/search/{keyword}")
+def search_notes(keyword: str):
+    results = []
+
+    for note in notes:
+        if keyword.lower() in note["title"].lower():
+            results.append(note)
+
+    return results
+
 @app.post("/notes")
 def create_note(note: Note):
     notes.append(note.dict())
