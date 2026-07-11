@@ -1,3 +1,5 @@
+from google import genai
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -5,6 +7,11 @@ import json
 import os
 
 app = FastAPI()
+load_dotenv()
+
+client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY")
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -77,3 +84,16 @@ def delete_note(id: int):
         json.dump(notes, f)
 
     return {"message": "Note deleted"}
+@app.post("/notes/{id}/summarize")
+def summarize_note(id: int):
+    if id < 0 or id >= len(notes):
+        return {"error": "Note not found"}
+
+    note_text = notes[id]["content"]
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"Summarize this note: {note_text}"
+    )
+
+    return {"summary": response.text}
