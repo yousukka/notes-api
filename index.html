@@ -24,6 +24,8 @@
                     <li>
                         <b>${note.title}</b> - ${note.content}
                         <button onclick="deleteNote(${index})">Delete</button>
+                        <button onclick="summarizeNote(${index})">Summarize</button>
+                        <div id="summary-${index}"></div>
                     </li>
                 `;
             });
@@ -52,6 +54,20 @@
             });
 
             loadNotes();
+        }
+
+        async function summarizeNote(id) {
+            const response = await fetch(
+                `http://127.0.0.1:8000/notes/${id}/summarize`,
+                {
+                    method: "POST"
+                }
+            );
+
+            const data = await response.json();
+
+            document.getElementById(`summary-${id}`).innerText =
+                data.summary;
         }
 
         loadNotes();
