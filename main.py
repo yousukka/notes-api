@@ -93,7 +93,7 @@ def summarize_note(id: int):
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"Summarize this note two sim: {note_text}"
+        contents=f"Summarize this note two sentences: {note_text}"
     )
 
     return {"summary": response.text}
