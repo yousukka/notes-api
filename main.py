@@ -41,7 +41,7 @@ def read_root():
 def list_notes():
     return notes
 
-# Day 5 Feature: Search notes by title
+# Search notes by title
 @app.get("/notes/search/{keyword}")
 def search_notes(keyword: str):
     results = []
@@ -86,14 +86,23 @@ def delete_note(id: int):
     return {"message": "Note deleted"}
 @app.post("/notes/{id}/summarize")
 def summarize_note(id: int):
+
+
     if id < 0 or id >= len(notes):
-        return {"error": "Note not found"}
+        return {"summary": "Note not found"}
 
     note_text = notes[id]["content"]
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=f"Summarize this note two sentences: {note_text}"
-    )
+    if not note_text.strip():
+        return {"summary": "Note content is empty"}
 
-    return {"summary": response.text}
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"Summarize this note in two sentences: {note_text}"
+        )
+
+        return {"summary": response.text}
+
+    except Exception:
+        return {"summary": "Please try again later"}
