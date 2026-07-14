@@ -14,7 +14,7 @@
 
     <script>
         async function loadNotes() {
-            const response = await fetch("http://127.0.0.1:8000/notes");
+            const response = await fetch("https://notes-api-fptd.onrender.com/notes");
             const notes = await response.json();
 
             let html = "";
@@ -37,7 +37,7 @@
             const title = document.getElementById("title").value;
             const content = document.getElementById("content").value;
 
-            await fetch("http://127.0.0.1:8000/notes", {
+            await fetch("https://notes-api-fptd.onrender.com/notes", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -49,7 +49,7 @@
         }
 
         async function deleteNote(id) {
-            await fetch(`http://127.0.0.1:8000/notes/${id}`, {
+            await fetch(`https://notes-api-fptd.onrender.com/notes/${id}`, {
                 method: "DELETE"
             });
 
@@ -58,7 +58,7 @@
 
         async function summarizeNote(id) {
             const response = await fetch(
-                `http://127.0.0.1:8000/notes/${id}/summarize`,
+                `https://notes-api-fptd.onrender.com/notes/${id}/summarize`,
                 {
                     method: "POST"
                 }
