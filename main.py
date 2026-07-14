@@ -6,6 +6,8 @@ from pydantic import BaseModel
 import json
 import os
 
+import uvicorn
+
 app = FastAPI()
 load_dotenv()
 
@@ -101,8 +103,14 @@ def summarize_note(id: int):
             model="gemini-2.5-flash",
             contents=f"Summarize this note in two sentences: {note_text}"
         )
-
         return {"summary": response.text}
 
-    except Exception:
-        return {"summary": "Please try again later"}
+    except Exception as e:
+      return {"summary": str(e)}
+
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+
+        
