@@ -4,73 +4,132 @@
     <title>Notes App</title>
 </head>
 <body>
-    <h1>My Notes</h1>
 
-    <input type="text" id="title" placeholder="Title">
-    <input type="text" id="content" placeholder="Content">
-    <button onclick="addNote()">Add Note</button>
+<h2>Login</h2>
 
-    <ul id="notes"></ul>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
 
-    <script>
-        async function loadNotes() {
-            const response = await fetch("https://notes-api-fptd.onrender.com/notes");
-            const notes = await response.json();
+<hr>
 
-            let html = "";
+<h1>My Notes</h1>
 
-            notes.forEach((note, index) => {
-                html += `
-                    <li>
-                        <b>${note.title}</b> - ${note.content}
-                        <button onclick="deleteNote(${index})">Delete</button>
-                        <button onclick="summarizeNote(${index})">Summarize</button>
-                        <div id="summary-${index}"></div>
-                    </li>
-                `;
-            });
+<input type="text" id="title" placeholder="Title">
+<input type="text" id="content" placeholder="Content">
+<button onclick="addNote()">Add Note</button>
 
-            document.getElementById("notes").innerHTML = html;
-        }
+<ul id="notes"></ul>
 
-        async function addNote() {
-            const title = document.getElementById("title").value;
-            const content = document.getElementById("content").value;
+<script>
 
-            await fetch("https://notes-api-fptd.onrender.com/notes", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ title, content })
-            });
+const API = "https://notes-api-fptd.onrender.com";
 
-            loadNotes();
-        }
+function getHeaders() {
+    return {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("token")
+    };
+}
 
-        async function deleteNote(id) {
-            await fetch(`https://notes-api-fptd.onrender.com/notes/${id}`, {
-                method: "DELETE"
-            });
+async function login() {
 
-            loadNotes();
-        }
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-        async function summarizeNote(id) {
-            const response = await fetch(
-                `https://notes-api-fptd.onrender.com/notes/${id}/summarize`,
-                {
-                    method: "POST"
-                }
-            );
+    const response = await fetch(API + "/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            email,
+            password
+        })
+    });
 
-            const data = await response.json();
+    const data = await response.json();
 
-            document.getElementById(`summary-${id}`).innerText =
-                data.summary;
-        }
+    localStorage.setItem("token", data.access_token);
 
-        loadNotes();
-    </script>
+    alert("Login Successful");
+
+    loadNotes();
+}
+
+async function loadNotes() {
+
+    const response = await fetch(API + "/notes", {
+        headers: getHeaders()
+    });
+
+    const notes = await response.json();
+
+    let html = "";
+
+    notes.forEach((note) => {
+
+        html += `
+        <li>
+            <b>${note.title}</b> - ${note.content}
+
+            <button onclick="deleteNote(${note.id})">Delete</button>
+
+            <button onclick="summarizeNote(${note.id})">Summarize</button>
+
+            <div id="summary-${note.id}"></div>
+
+        </li>
+        `;
+    });
+
+    document.getElementById("notes").innerHTML = html;
+}
+
+async function addNote() {
+
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
+
+    await fetch(API + "/notes", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+            title,
+            content
+        })
+    });
+
+    loadNotes();
+}
+
+async function deleteNote(id) {
+
+    await fetch(API + "/notes/" + id, {
+        method: "DELETE",
+        headers: getHeaders()
+    });
+
+    loadNotes();
+}
+
+async function summarizeNote(id) {
+
+    const response = await fetch(API + "/notes/" + id + "/summarize", {
+        method: "POST",
+        headers: getHeaders()
+    });
+
+    const data = await response.json();
+
+    document.getElementById("summary-" + id).innerText = data.summary;
+}
+
+if(localStorage.getItem("token")){
+    loadNotes();
+}
+
+</script>
+
 </body>
 </html>
