@@ -1,5 +1,5 @@
+from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -9,6 +9,7 @@ from sqlmodel import SQLModel, Session, select
 from google import genai
 from dotenv import load_dotenv
 import os
+import json
 import uvicorn
 
 from database import engine, get_session
@@ -16,6 +17,11 @@ from models import Note, NoteCreate, User, UserCreate
 
 load_dotenv()
 
+
+class Summary(BaseModel):
+    summary: str
+    key_points: list[str]
+    sentiment: str
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -223,21 +229,53 @@ def summarize_note(
         raise HTTPException(status_code=404, detail="Note not found")
 
     if not note.content.strip():
-        return {"summary": "Note content is empty"}
+        return {
+            "summary": "Note content is empty",
+            "key_points": [],
+            "sentiment": "neutral"
+        }
 
     try:
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=f"Summarize this note in two sentences: {note.content}"
+            contents=f"""
+            Analyze the following note.
+
+            Return ONLY valid JSON in exactly this format:
+            {{
+                "summary": "short summary",
+                "key_points": ["key point 1", "key point 2"],
+                "sentiment": "positive, negative, or neutral"
+            }}
+
+            Note:
+            {note.content}
+            """
         )
 
-        return {"summary": response.text}
+        clean_text = response.text.strip()
 
-    except Exception as e:
-        return {"summary": str(e)}
+        if clean_text.startswith("```json"):
+            clean_text = clean_text[7:]
+
+        if clean_text.startswith("```"):
+            clean_text = clean_text[3:]
+
+        if clean_text.endswith("```"):
+            clean_text = clean_text[:-3]
+
+        clean_text = clean_text.strip()
+
+        data = json.loads(clean_text)
+        result = Summary.model_validate(data)
+        return result
+
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail="The model returned an unexpected format"
+        )
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
-    
-    

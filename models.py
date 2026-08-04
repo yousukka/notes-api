@@ -29,6 +29,8 @@ class Note(NoteBase, table=True):
 
 class NoteCreate(NoteBase):
     pass
+
+
 class UserCreate(SQLModel):
     email: str
     password: str
